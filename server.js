@@ -1,8 +1,11 @@
 const express = require('express');
-const { Together } = require("together-ai");
-const together = new Together({
-  apiKey: process.env.TOGETHER_API_KEY
-});
+    import Together from 'together-ai';
+
+    const client = new Together({
+      apiKey: process.env.TOGETHER_API_KEY //API key can be obtained from the Together AI website after creating an account
+    });
+
+
 const app = express();
 
 // Middleware to parse JSON bodies
