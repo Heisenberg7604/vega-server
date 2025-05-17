@@ -1,9 +1,9 @@
 import express from 'express';
-import { Together } from 'together-ai';
-
+import pkg from 'together-ai';
+const { Together } = pkg;
 
 const client = new Together({
-  apiKey: process.env.TOGETHER_API_KEY //API key can be obtained from the Together AI website after creating an account
+  apiKey: process.env.TOGETHER_API_KEY
 });
 
 
