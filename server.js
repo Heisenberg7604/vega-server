@@ -1,5 +1,6 @@
 const express = require('express');
-const Together = require('together-ai').default; // Use .default for CommonJS
+const { Together } = require('together-ai');
+
 const app = express();
 
 // Middleware to parse JSON bodies
