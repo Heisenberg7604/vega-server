@@ -3001,7 +3001,7 @@ const jsonData = {
 };
 
 // POST endpoint to handle queries
-app.post('/api/query', async (req, res) => {
+app.post('https://vega-server-production.up.railway.app/api/query', async (req, res) => {
   try {
     const { messages } = req.body;
 
