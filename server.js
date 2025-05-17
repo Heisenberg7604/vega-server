@@ -1,18 +1,27 @@
 const express = require('express');
-const Together = require('together-ai');
-const app = express();
+  const Together = require('together-ai');
+  const app = express();
 
-// Middleware to parse JSON bodies
-app.use(express.json());
+  // Middleware to parse JSON bodies
+  app.use(express.json());
 
-// Initialize Together AI client
-const together = new Together({
-  apiKey: process.env.TOGETHER_API_KEY,
-});
+  // Log Together AI module to debug
+  console.log('Together module:', Together);
 
-// Placeholder for JSON data (paste your JSON data here)
-const jsonData = {
-  "expo": {
+  // Initialize Together AI client
+  let together;
+  try {
+    together = new Together({
+      apiKey: process.env.TOGETHER_API_KEY,
+    });
+  } catch (error) {
+    console.error('Failed to initialize Together AI client:', error);
+    process.exit(1); // Exit if initialization fails
+  }
+
+  // Placeholder for JSON data (paste your JSON data here)
+  const jsonData = {
+     "expo": {
     "name": "jpapp",
     "slug": "jpapp",
     "version": "1.0.0",
@@ -2989,58 +2998,57 @@ const jsonData = {
         ]
       }
     }
- 
-};
+  };
 
-// POST endpoint to handle queries
-app.post('/api/query', async (req, res) => {
-  try {
-    const { messages } = req.body;
+  // POST endpoint to handle queries
+  app.post('/api/query', async (req, res) => {
+    try {
+      const { messages } = req.body;
 
-    if (!messages || !Array.isArray(messages)) {
-      return res.status(400).json({ error: 'Messages array is required' });
+      if (!messages || !Array.isArray(messages)) {
+        return res.status(400).json({ error: 'Messages array is required' });
+      }
+
+      const systemMessage = {
+        role: 'system',
+        content: `You are a precise and knowledgeable assistant tasked with answering queries based solely on the provided JSON and PDF data. The data includes:
+  - **JSON Data**: Configuration details for an Expo app named "jpapp" and specifications for industrial products: Tape Extrusion Line, Circular Weaving Machine, Extrusion Coating Line, and Bag Conversion Line, including their models, descriptions, industries, related products, and detailed specifications.
+
+  **Instructions:**
+  - Give only what is asked, don't give extra answers
+  - Give accurate data from the JSON like how much machinery, manpower, electricity is required.
+  - Answer only using the information in the JSON data provided below.
+  - Do not use external knowledge or make assumptions beyond the provided data.
+  - Provide accurate, concise, and factual responses, focusing on the relevant details.
+  - If the query cannot be answered with the provided data, respond with: "The provided JSON data do not contain information to answer this query."
+  - Use clear, structured responses with bullet points where applicable for clarity.
+  - For calculations (e.g., specific machine capacity), use the formula: SMC = Total Production Capacity / Quantity of Specific Machine. Ensure calculations are based only on the provided data.
+  - Maintain a professional and technical tone suitable for industrial and app configuration contexts.
+
+  **JSON Data:**
+  ${JSON.stringify(jsonData, null, 2)}
+  `
+      };
+
+      const updatedMessages = [systemMessage, ...messages];
+
+      const response = await together.chat.completions.create({
+        model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
+        messages: updatedMessages,
+      });
+
+      const assistantReply = response?.choices?.[0]?.message?.content ||
+        "I'm here to help, but I couldn't generate a response right now. Please try again.";
+
+      return res.status(200).json({ reply: assistantReply });
+    } catch (error) {
+      console.error('Error in Together AI request:', error);
+      return res.status(500).json({ reply: "I'm having trouble processing your request. Please try again." });
     }
+  });
 
-    const systemMessage = {
-      role: 'system',
-      content: `You are a precise and knowledgeable assistant tasked with answering queries based solely on the provided JSON and PDF data. The data includes:
-- **JSON Data**: Configuration details for an Expo app named "jpapp" and specifications for industrial products: Tape Extrusion Line, Circular Weaving Machine, Extrusion Coating Line, and Bag Conversion Line, including their models, descriptions, industries, related products, and detailed specifications.
-
-**Instructions:**
-- Give only what is asked, don't give extra answers
-- Give accurate data from the JSON like how much machinery, manpower, electricity is required.
-- Answer only using the information in the JSON data provided below.
-- Do not use external knowledge or make assumptions beyond the provided data.
-- Provide accurate, concise, and factual responses, focusing on the relevant details.
-- If the query cannot be answered with the provided data, respond with: "The provided JSON data do not contain information to answer this query."
-- Use clear, structured responses with bullet points where applicable for clarity.
-- For calculations (e.g., specific machine capacity), use the formula: SMC = Total Production Capacity / Quantity of Specific Machine. Ensure calculations are based only on the provided data.
-- Maintain a professional and technical tone suitable for industrial and app configuration contexts.
-
-**JSON Data:**
-${JSON.stringify(jsonData, null, 2)}
-`
-    };
-
-    const updatedMessages = [systemMessage, ...messages];
-
-    const response = await together.chat.completions.create({
-      model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
-      messages: updatedMessages,
-    });
-
-    const assistantReply = response?.choices?.[0]?.message?.content ||
-      "I'm here to help, but I couldn't generate a response right now. Please try again.";
-
-    return res.status(200).json({ reply: assistantReply });
-  } catch (error) {
-    console.error('Error in Together AI request:', error);
-    return res.status(500).json({ reply: "I'm having trouble processing your request. Please try again." });
-  }
-});
-
-// Start the server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+  // Start the server
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
