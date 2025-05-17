@@ -1,6 +1,8 @@
 const express = require('express');
-const { Together } = require('together-ai');
-
+const { Together } = require("together-ai");
+const together = new Together({
+  apiKey: process.env.TOGETHER_API_KEY
+});
 const app = express();
 
 // Middleware to parse JSON bodies
@@ -8,17 +10,11 @@ app.use(express.json());
 
 // Log Together AI module to debug
 console.log('Together module:', Together);
+console.log(response.choices[0].message.content);
 
 // Initialize Together AI client
-let together;
-try {
-  together = new Together({
-    apiKey: process.env.TOGETHER_API_KEY,
-  });
-} catch (error) {
-  console.error('Failed to initialize Together AI client:', error);
-  process.exit(1); // Exit if initialization fails
-}
+
+
 
 // Placeholder for JSON data (paste your JSON data here)
 const jsonData = {
